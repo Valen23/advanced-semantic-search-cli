@@ -1,31 +1,29 @@
 ﻿using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.AI.Ollama;
+using Microsoft.KernelMemory.DocumentStorage.DevTools;
+using Microsoft.KernelMemory.FileSystem.DevTools;
+using Microsoft.KernelMemory.MemoryStorage.DevTools;
 
-// 1. Validación de entrada (Argumentos dinámicos)
+// 1. Enrutador de comandos
 if (args.Length < 2)
 {
-    Console.WriteLine("Uso incorrecto de la CLI.");
-    Console.WriteLine("Ejecutar como: dotnet run <ruta_al_archivo> \"<tu_pregunta>\"");
+    Console.WriteLine("Uso de la CLI:");
+    Console.WriteLine("  Para ingerir:  dotnet run ingest <ruta_al_archivo>");
+    Console.WriteLine("  Para buscar:   dotnet run ask \"<tu_pregunta>\" [idioma_opcional]");
     return;
 }
 
-var filePath = args[0];
-var question = args[1];
+var command = args[0].ToLower();
+var argument = args[1];
 
-// Lenguaje
-var language = args.Length > 2 = args[2] : "español";
-
-if (!File.Exists(filePath))
-{
-    Console.WriteLine($"Error: No se encontró el archivo en la ruta '{filePath}'.");
-    return;
-}
-
-Console.WriteLine("1. Iniciando entorno y conectando con Ollama...");
+Console.WriteLine("1. Iniciando entorno y configurando almacenamiento local...");
 
 try
 {
-    // 2. Configuración del Motor (Serverless + In-Memory)
+    // 2. Configuración de Persistencia Local
+    var storageDirectory = "MemoriaLocal";
+    Directory.CreateDirectory(storageDirectory);
+
     var ollamaEndpoint = "http://localhost:11434";
     var config = new OllamaConfig
     {
@@ -34,27 +32,79 @@ try
         EmbeddingModel = new OllamaModelConfig("nomic-embed-text"),
     };
 
+    // 3. Construimos el motor CON persistencia en disco
     var memory = new KernelMemoryBuilder()
         .WithOllamaTextGeneration(config)
         .WithOllamaTextEmbeddingGeneration(config)
-        .WithSimpleVectorDb()
+        .WithSimpleFileStorage(
+            new SimpleFileStorageConfig
+            {
+                Directory = storageDirectory,
+                StorageType = FileSystemTypes.Disk,
+            }
+        )
+        .WithSimpleVectorDb(
+            new SimpleVectorDbConfig
+            {
+                Directory = storageDirectory,
+                StorageType = FileSystemTypes.Disk,
+            }
+        )
         .Build<MemoryServerless>();
 
-    Console.WriteLine($"2. Ingiriendo documento: {filePath}...");
+    // 4. Ejecución de la acción solicitada
+    if (command == "ingest")
+    {
+        var filePath = argument;
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine($"Error: Archivo no encontrado en '{filePath}'");
+            return;
+        }
 
-    // Usamos el nombre del archivo como ID interno para Kernel Memory
-    await memory.ImportDocumentAsync(filePath, documentId: Path.GetFileName(filePath));
+        Console.WriteLine($"2. Ingiriendo documento: {filePath}...");
+        Console.WriteLine("Procesando vectores... (esto depende enteramente de tu CPU/GPU)");
 
-    Console.WriteLine($"3. Documento vectorizado. Buscando respuesta a: '{question}'...");
+        // Usamos el nombre del archivo como ID para la base de datos
+        await memory.ImportDocumentAsync(filePath, documentId: Path.GetFileName(filePath));
 
-    var promptFinal = $"{question}\n\n[INSTRUCCIÓN ESTRICTA: Redacta tu respuesta final única y exclusivamente en {language}].";
+        Console.WriteLine(
+            "\n¡Ingesta completada exitosamente! Los vectores están seguros en el disco."
+        );
+    }
+    else if (command == "ask")
+    {
+        var question = argument;
+        var language = args.Length > 2 ? args[2] : "español";
+        var promptFinal =
+            $"{question}\n\n[INSTRUCCIÓN ESTRICTA: Redacta tu respuesta final única y exclusivamente en {language}]\n[INSTRUCCIÓN ESTRICTA: Respuestas breves].";
 
-    // 3. Ejecución de la consulta
-    var answer = await memory.AskAsync(promptFinal);
+        Console.WriteLine(
+            $"2. Buscando en la base de datos vectorial y redactando en {language}..."
+        );
 
-    Console.WriteLine("\n================ RESPUESTA ================");
-    Console.WriteLine(answer.Result);
-    Console.WriteLine("===========================================\n");
+        var answer = await memory.AskAsync(promptFinal);
+
+        Console.WriteLine("\n================ RESPUESTA ================");
+        Console.WriteLine(answer.Result);
+        Console.WriteLine("===========================================\n");
+    }
+    else if (command == "delete")
+    {
+        var fileName = argument;
+
+        Console.WriteLine(
+            $"2. Buscando y eliminando el documento '{fileName}' de la memoria local..."
+        );
+        await memory.DeleteDocumentAsync(documentId: fileName);
+        Console.WriteLine(
+            "¡Operación completada! Los vectores de este documento han sido borrados del disco."
+        );
+    }
+    else
+    {
+        Console.WriteLine($"Comando '{command}' no reconocido. Usa 'ingest' o 'ask'.");
+    }
 }
 catch (HttpRequestException ex)
 {
