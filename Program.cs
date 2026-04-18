@@ -12,6 +12,9 @@ if (args.Length < 2)
 var filePath = args[0];
 var question = args[1];
 
+// Lenguaje
+var language = args.Length > 2 = args[2] : "español";
+
 if (!File.Exists(filePath))
 {
     Console.WriteLine($"Error: No se encontró el archivo en la ruta '{filePath}'.");
@@ -44,8 +47,10 @@ try
 
     Console.WriteLine($"3. Documento vectorizado. Buscando respuesta a: '{question}'...");
 
+    var promptFinal = $"{question}\n\n[INSTRUCCIÓN ESTRICTA: Redacta tu respuesta final única y exclusivamente en {language}].";
+
     // 3. Ejecución de la consulta
-    var answer = await memory.AskAsync(question);
+    var answer = await memory.AskAsync(promptFinal);
 
     Console.WriteLine("\n================ RESPUESTA ================");
     Console.WriteLine(answer.Result);
