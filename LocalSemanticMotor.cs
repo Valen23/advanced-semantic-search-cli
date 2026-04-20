@@ -44,6 +44,14 @@ public class LocalSemanticMotor : ISemanticMotor
             .Build<MemoryServerless>();
     }
 
+    private string NormalizeDocumentId(string rawName)
+    {
+        string normalizedDocId = Path.GetFileNameWithoutExtension(rawName)
+            .ToLower()
+            .Replace(" ", "-");
+        return normalizedDocId;
+    }
+
     public async Task IngestAsync(string filePath, string folderPath)
     {
         // validacion
@@ -56,7 +64,7 @@ public class LocalSemanticMotor : ISemanticMotor
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         var extension = Path.GetExtension(filePath);
 
-        string documentId = Path.GetFileName(filePath).ToLower().Replace(" ", "-");
+        string documentId = NormalizeDocumentId(filePath);
 
         Console.WriteLine($"2. Ingiriendo documento: {filePath}...");
 
@@ -75,11 +83,7 @@ public class LocalSemanticMotor : ISemanticMotor
 
         try
         {
-            await _memory.ImportDocumentAsync(
-                filePath,
-                documentId: Path.GetFileName(filePath),
-                tags: fileTags
-            );
+            await _memory.ImportDocumentAsync(filePath, documentId: documentId, tags: fileTags);
 
             Console.WriteLine($"[OK] Ingesta completada: {documentId}");
         }
@@ -129,14 +133,14 @@ public class LocalSemanticMotor : ISemanticMotor
 
             await _memory.ImportDocumentAsync(
                 filePath,
-                documentId: fileName.ToLower().Replace(" ", "-"),
+                documentId: NormalizeDocumentId(fileName),
                 tags: fileTags
             );
         }
         Console.WriteLine($"[OK] Ingesta por lotes completada completada.");
     }
 
-    public async Task AskQuestionAsync(string question, string language, string filterArg)
+    public async Task<string> AskQuestionAsync(string question, string language, string? filterArg)
     {
         var promptFinal =
             $"{question}\n\n[INSTRUCCIÓN ESTRICTA: Redacta tu respuesta final única y exclusivamente en {language}]\n[INSTRUCCIÓN ESTRICTA: Respuestas breves].";
@@ -201,18 +205,17 @@ public class LocalSemanticMotor : ISemanticMotor
         Console.WriteLine(
             "==========================================================================\n"
         );
+        return answer.Result;
     }
 
-    public async Task DeleteAsync(string fileName)
+    public async Task DeleteDocumentAsync(string fileName)
     {
         Console.WriteLine(
             $"2. Buscando y eliminando el documento '{fileName}' de la memoria local..."
         );
-        await _memory.DeleteDocumentAsync(documentId: fileName);
+        await _memory.DeleteDocumentAsync(documentId: NormalizeDocumentId(fileName));
         Console.WriteLine(
             "¡Operación completada! Los vectores de este documento han sido borrados del disco."
         );
     }
-
-    // [Implementa los demás métodos...]
 }
