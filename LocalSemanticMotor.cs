@@ -5,11 +5,21 @@ using Microsoft.KernelMemory.DocumentStorage.DevTools;
 using Microsoft.KernelMemory.FileSystem.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
 
+/// <summary>
+/// Provee la lógica central del "Motor Semántico", integrando Microsoft Kernel Memory
+/// con Ollama para la ingesta y búsqueda de documentos en lenguaje natural.
+/// </summary>
 public class LocalSemanticMotor : ISemanticMotor
 {
     private readonly IKernelMemory _memory;
 
-    // El constructor inicializa la configuración de Kernel Memory y Ollama
+    /// <summary>
+    /// Inicializa una nueva instancia del motor semántico configurando el almacenamiento y los modelos de IA.
+    /// </summary>
+    /// <param name="storageDirectory">Directorio local donde se guardarán los vectores y documentos.</param>
+    /// <param name="ollamaUrl">URL del endpoint de Ollama (ej. http://localhost:11434).</param>
+    /// <param name="textModel">Nombre del modelo para generación de texto (ej. llama3).</param>
+    /// <param name="embeddingModel">Nombre del modelo para generación de embeddings (ej. nomic-embed-text).</param>
     public LocalSemanticMotor(
         string storageDirectory,
         string ollamaUrl,
@@ -17,10 +27,9 @@ public class LocalSemanticMotor : ISemanticMotor
         string embeddingModel
     )
     {
-        // storage
         var _storageDirectory = storageDirectory;
         Directory.CreateDirectory(_storageDirectory);
-        // ollama
+
         var _ollamaEndpoint = ollamaUrl;
         var config = new OllamaConfig
         {
@@ -28,7 +37,7 @@ public class LocalSemanticMotor : ISemanticMotor
             TextModel = new OllamaModelConfig(textModel),
             EmbeddingModel = new OllamaModelConfig(embeddingModel),
         };
-        // memory
+
         _memory = new KernelMemoryBuilder()
             .WithOllamaTextGeneration(config)
             .WithOllamaTextEmbeddingGeneration(config)
@@ -49,6 +58,9 @@ public class LocalSemanticMotor : ISemanticMotor
             .Build<MemoryServerless>();
     }
 
+    /// <summary>
+    /// Normaliza una ruta o nombre de archivo para ser usado como DocumentId compatible con Kernel Memory.
+    /// </summary>
     private string NormalizeDocumentId(string rawName)
     {
         string normalizedDocId = Path.GetFileNameWithoutExtension(rawName)
@@ -57,9 +69,13 @@ public class LocalSemanticMotor : ISemanticMotor
         return normalizedDocId;
     }
 
+    /// <summary>
+    /// Ingiere un único documento en la memoria semántica, asignando etiquetas automáticas basadas en la ruta.
+    /// </summary>
+    /// <param name="filePath">Ruta completa del archivo a procesar.</param>
+    /// <param name="folderPath">Ruta raíz del escaneo para determinar categorías jerárquicas.</param>
     public async Task IngestAsync(string filePath, string folderPath)
     {
-        // validacion
         if (!File.Exists(filePath))
         {
             Console.WriteLine($"Error: Archivo no encontrado en '{filePath}'");
@@ -98,6 +114,10 @@ public class LocalSemanticMotor : ISemanticMotor
         }
     }
 
+    /// <summary>
+    /// Escanea un directorio completo e ingiere todos los archivos compatibles (.pdf, .txt).
+    /// </summary>
+    /// <param name="folderPath">Ruta del directorio a escanear.</param>
     public async Task IngestFolderAsync(string folderPath)
     {
         if (!Directory.Exists(folderPath))
@@ -105,14 +125,12 @@ public class LocalSemanticMotor : ISemanticMotor
 
         Console.WriteLine($"2. Escaneando directorio: {folderPath}...");
 
-        // lista todas las rutas de todos los archivos filtrando por su extension
         string[] extensions = { ".pdf", ".txt" };
         var files = Directory
             .EnumerateFiles(folderPath, "*.*", SearchOption.AllDirectories)
             .Where(f => extensions.Contains(Path.GetExtension(f).ToLower()))
             .ToList();
 
-        // itera por todo el array
         foreach (var filePath in files)
         {
             Console.WriteLine($"   Procesando: {filePath}");
@@ -145,22 +163,26 @@ public class LocalSemanticMotor : ISemanticMotor
         Console.WriteLine($"[OK] Ingesta por lotes completada completada.");
     }
 
+    /// <summary>
+    /// Realiza una consulta en lenguaje natural sobre los documentos ingeridos.
+    /// </summary>
+    /// <param name="question">La pregunta o prompt del usuario.</param>
+    /// <param name="language">Idioma en el que se espera la respuesta (ej. "español").</param>
+    /// <param name="filterArg">Opcional. Filtro en formato "clave:valor" para restringir la búsqueda.</param>
+    /// <returns>La respuesta generada por el LLM basada en los fragmentos recuperados.</returns>
     public async Task<string> AskQuestionAsync(string question, string language, string? filterArg)
     {
         var promptFinal =
             $"{question}\n\n[INSTRUCCIÓN ESTRICTA: Redacta tu respuesta final única y exclusivamente en {language}]\n[INSTRUCCIÓN ESTRICTA: Respuestas breves].";
 
-        // 1. Inicializamos el filtro como nulo por defecto
         MemoryFilter? myFilter = null;
 
-        // 2. Verificamos si el usuario envió un cuarto argumento (el filtro)
         if (!string.IsNullOrWhiteSpace(filterArg))
         {
             var parts = filterArg.Split(':');
 
             if (parts.Length == 2)
             {
-                // Construimos el filtro dinámicamente
                 myFilter = new MemoryFilter().ByTag(parts[0], parts[1]);
                 Console.WriteLine(
                     $"2. [Filtro Activo] Restringiendo búsqueda a '{parts[0]}' = '{parts[1]}'"
@@ -180,7 +202,6 @@ public class LocalSemanticMotor : ISemanticMotor
             );
         }
 
-        // 3. Pasamos el filtro (si es nulo, Kernel Memory ignora el filtro y busca en todo)
         var answer = await _memory.AskAsync(promptFinal, filter: myFilter);
 
         Console.WriteLine("\n================ RESPUESTA ================");
@@ -194,12 +215,9 @@ public class LocalSemanticMotor : ISemanticMotor
         {
             Console.WriteLine($"\n Documento: {citation.SourceName}");
 
-            // Recorremos los "chunks" exactos que extrajo de este documento
             int chunkIndex = 1;
             foreach (var partition in citation.Partitions)
             {
-                // partition.Relevance te da el score de similitud vectorial
-                // partition.Text te da el extracto original
                 Console.WriteLine(
                     $"  ├─ Fragmento {chunkIndex} (Relevancia: {partition.Relevance:P1}):"
                 );
@@ -213,6 +231,10 @@ public class LocalSemanticMotor : ISemanticMotor
         return answer.Result;
     }
 
+    /// <summary>
+    /// Elimina físicamente los vectores y fragmentos de un documento guardado en la memoria.
+    /// </summary>
+    /// <param name="fileName">Nombre del archivo o DocumentId a eliminar.</param>
     public async Task DeleteDocumentAsync(string fileName)
     {
         Console.WriteLine(

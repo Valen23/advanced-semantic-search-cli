@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.AI.Ollama;
@@ -28,7 +28,6 @@ if (string.IsNullOrWhiteSpace(textModel))
 if (string.IsNullOrWhiteSpace(embeddingModel))
     throw new Exception("Falta configuración crítica: 'SemanticEngine:EmbeddingModel'");
 
-// Enrutador de comandos
 if (args.Length < 2)
 {
     Console.WriteLine("Uso de la CLI:");
@@ -51,7 +50,6 @@ Console.WriteLine("1. Iniciando entorno y configurando almacenamiento local...")
 
 try
 {
-    // Commands Handler
     if (command == "ingest")
     {
         await localSemanticMotor.IngestAsync(argument, "Docs");
