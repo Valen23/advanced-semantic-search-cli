@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("advanced-semantic-search-cli")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+193dc259cf41518ad401a0187d10c20136fcae6b")]
 [assembly: System.Reflection.AssemblyProductAttribute("advanced-semantic-search-cli")]
 [assembly: System.Reflection.AssemblyTitleAttribute("advanced-semantic-search-cli")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

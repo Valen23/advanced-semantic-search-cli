@@ -81,3 +81,4 @@ D:\advanced-semantic-search-cli\obj\Debug\net10.0\refint\advanced-semantic-searc
 D:\advanced-semantic-search-cli\obj\Debug\net10.0\advanced-semantic-search-cli.pdb
 D:\advanced-semantic-search-cli\obj\Debug\net10.0\advanced-semantic-search-cli.genruntimeconfig.cache
 D:\advanced-semantic-search-cli\obj\Debug\net10.0\ref\advanced-semantic-search-cli.dll
+D:\advanced-semantic-search-cli\obj\Debug\net10.0\advanced-semantic-search-cli.sourcelink.json
