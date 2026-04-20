@@ -13,6 +13,8 @@ public class LocalSemanticMotor : ISemanticMotor
 {
     private readonly IKernelMemory _memory;
 
+    public string StorageDirectory { get; set; }
+
     /// <summary>
     /// Inicializa una nueva instancia del motor semántico configurando el almacenamiento y los modelos de IA.
     /// </summary>
@@ -27,8 +29,8 @@ public class LocalSemanticMotor : ISemanticMotor
         string embeddingModel
     )
     {
-        var _storageDirectory = storageDirectory;
-        Directory.CreateDirectory(_storageDirectory);
+        this.StorageDirectory = storageDirectory;
+        Directory.CreateDirectory(storageDirectory);
 
         var _ollamaEndpoint = ollamaUrl;
         var config = new OllamaConfig
@@ -44,14 +46,14 @@ public class LocalSemanticMotor : ISemanticMotor
             .WithSimpleFileStorage(
                 new SimpleFileStorageConfig
                 {
-                    Directory = _storageDirectory,
+                    Directory = storageDirectory,
                     StorageType = FileSystemTypes.Disk,
                 }
             )
             .WithSimpleVectorDb(
                 new SimpleVectorDbConfig
                 {
-                    Directory = _storageDirectory,
+                    Directory = storageDirectory,
                     StorageType = FileSystemTypes.Disk,
                 }
             )
@@ -59,14 +61,17 @@ public class LocalSemanticMotor : ISemanticMotor
     }
 
     /// <summary>
-    /// Normaliza una ruta o nombre de archivo para ser usado como DocumentId compatible con Kernel Memory.
+    /// Normaliza una cadena (como una ruta relativa) para ser usado como DocumentId compatible con Kernel Memory.
+    /// Reemplaza espacios y separadores de carpeta por guiones medios.
     /// </summary>
-    private string NormalizeDocumentId(string rawName)
+    private string NormalizeDocumentId(string rawPath)
     {
-        string normalizedDocId = Path.GetFileNameWithoutExtension(rawName)
+        return rawPath
             .ToLower()
-            .Replace(" ", "-");
-        return normalizedDocId;
+            .Replace(Path.DirectorySeparatorChar, '-')
+            .Replace(Path.AltDirectorySeparatorChar, '-')
+            .Replace(" ", "-")
+            .Trim('-');
     }
 
     /// <summary>
@@ -85,22 +90,22 @@ public class LocalSemanticMotor : ISemanticMotor
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         var extension = Path.GetExtension(filePath);
 
-        string documentId = NormalizeDocumentId(filePath);
+        string relativePath = Path.GetRelativePath(folderPath, filePath);
+        string documentId = NormalizeDocumentId(relativePath);
 
         Console.WriteLine($"2. Ingiriendo documento: {filePath}...");
 
         var fileTags = new TagCollection();
-
-        string relativePath = Path.GetRelativePath(folderPath, filePath);
         string[] pathParts = relativePath.Split(Path.DirectorySeparatorChar);
 
+        // Agregamos cada carpeta del path como una categoría
         for (int i = 0; i < pathParts.Length - 1; i++)
         {
             fileTags.Add("category", pathParts[i]);
         }
 
-        fileTags.Add("formato", extension.Replace(".", ""));
-        fileTags.Add("fecha_ingesta", DateTime.Now.ToString("yyyy-MM-dd"));
+        fileTags.Add("format", extension.Replace(".", ""));
+        fileTags.Add("ingest_date", DateTime.Now.ToString("yyyy-MM-dd"));
 
         try
         {
@@ -141,26 +146,21 @@ public class LocalSemanticMotor : ISemanticMotor
             string relativePath = Path.GetRelativePath(folderPath, filePath);
             string[] pathParts = relativePath.Split(Path.DirectorySeparatorChar);
 
-            if (pathParts.Length > 1)
-            {
-                fileTags.Add("department", pathParts[0]);
-            }
+            // Evitamos colisiones usando el relativePath como DocumentId
+            string documentId = NormalizeDocumentId(relativePath);
 
-            for (int i = 1; i < pathParts.Length - 1; i++)
+            // Tags jerárquicos consistentes
+            for (int i = 0; i < pathParts.Length - 1; i++)
             {
-                fileTags.Add("extra_tag", pathParts[i]);
+                fileTags.Add("category", pathParts[i]);
             }
 
             fileTags.Add("file_name", fileName);
-            fileTags.Add("ingest_date", DateTime.Now.ToString("dd-MM-yyyy"));
+            fileTags.Add("ingest_date", DateTime.Now.ToString("yyyy-MM-dd"));
 
-            await _memory.ImportDocumentAsync(
-                filePath,
-                documentId: NormalizeDocumentId(fileName),
-                tags: fileTags
-            );
+            await _memory.ImportDocumentAsync(filePath, documentId: documentId, tags: fileTags);
         }
-        Console.WriteLine($"[OK] Ingesta por lotes completada completada.");
+        Console.WriteLine($"[OK] Ingesta por lotes completada.");
     }
 
     /// <summary>
