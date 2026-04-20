@@ -20,13 +20,13 @@ if (string.IsNullOrWhiteSpace(storageDirectory))
     throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
 
 if (string.IsNullOrWhiteSpace(ollamaUrl))
-    throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
+    throw new Exception("Falta configuración crítica: 'SemanticEngine:OllamaEndpoint'");
 
 if (string.IsNullOrWhiteSpace(textModel))
-    throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
+    throw new Exception("Falta configuración crítica: 'SemanticEngine:TextModel'");
 
 if (string.IsNullOrWhiteSpace(embeddingModel))
-    throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
+    throw new Exception("Falta configuración crítica: 'SemanticEngine:EmbeddingModel'");
 
 // Enrutador de comandos
 if (args.Length < 2)
