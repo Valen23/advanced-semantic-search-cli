@@ -1,9 +1,32 @@
 ﻿using System.IO;
+using Microsoft.Extensions.Configuration;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.AI.Ollama;
 using Microsoft.KernelMemory.DocumentStorage.DevTools;
 using Microsoft.KernelMemory.FileSystem.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
+
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
+string? storageDirectory = configuration["SemanticEngine:StorageDirectory"];
+string? ollamaUrl = configuration["SemanticEngine:OllamaEndpoint"];
+string? textModel = configuration["SemanticEngine:TextModel"];
+string? embeddingModel = configuration["SemanticEngine:EmbeddingModel"];
+
+if (string.IsNullOrWhiteSpace(storageDirectory))
+    throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
+
+if (string.IsNullOrWhiteSpace(ollamaUrl))
+    throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
+
+if (string.IsNullOrWhiteSpace(textModel))
+    throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
+
+if (string.IsNullOrWhiteSpace(embeddingModel))
+    throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
 
 // Enrutador de comandos
 if (args.Length < 2)
@@ -17,7 +40,12 @@ if (args.Length < 2)
 var command = args[0].ToLower();
 var argument = args[1];
 
-var localSemanticMotor = new LocalSemanticMotor();
+var localSemanticMotor = new LocalSemanticMotor(
+    storageDirectory,
+    ollamaUrl,
+    textModel,
+    embeddingModel
+);
 
 Console.WriteLine("1. Iniciando entorno y configurando almacenamiento local...");
 

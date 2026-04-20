@@ -10,18 +10,23 @@ public class LocalSemanticMotor : ISemanticMotor
     private readonly IKernelMemory _memory;
 
     // El constructor inicializa la configuración de Kernel Memory y Ollama
-    public LocalSemanticMotor()
+    public LocalSemanticMotor(
+        string storageDirectory,
+        string ollamaUrl,
+        string textModel,
+        string embeddingModel
+    )
     {
         // storage
-        var storageDirectory = "MemoriaLocal";
-        Directory.CreateDirectory(storageDirectory);
+        var _storageDirectory = storageDirectory;
+        Directory.CreateDirectory(_storageDirectory);
         // ollama
-        var ollamaEndpoint = "http://localhost:11434";
+        var _ollamaEndpoint = ollamaUrl;
         var config = new OllamaConfig
         {
-            Endpoint = ollamaEndpoint,
-            TextModel = new OllamaModelConfig("llama3"),
-            EmbeddingModel = new OllamaModelConfig("nomic-embed-text"),
+            Endpoint = _ollamaEndpoint,
+            TextModel = new OllamaModelConfig(textModel),
+            EmbeddingModel = new OllamaModelConfig(embeddingModel),
         };
         // memory
         _memory = new KernelMemoryBuilder()
@@ -30,14 +35,14 @@ public class LocalSemanticMotor : ISemanticMotor
             .WithSimpleFileStorage(
                 new SimpleFileStorageConfig
                 {
-                    Directory = storageDirectory,
+                    Directory = _storageDirectory,
                     StorageType = FileSystemTypes.Disk,
                 }
             )
             .WithSimpleVectorDb(
                 new SimpleVectorDbConfig
                 {
-                    Directory = storageDirectory,
+                    Directory = _storageDirectory,
                     StorageType = FileSystemTypes.Disk,
                 }
             )
