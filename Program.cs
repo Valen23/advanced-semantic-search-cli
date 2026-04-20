@@ -1,4 +1,5 @@
-﻿using Microsoft.KernelMemory;
+﻿using System.IO;
+using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.AI.Ollama;
 using Microsoft.KernelMemory.DocumentStorage.DevTools;
 using Microsoft.KernelMemory.FileSystem.DevTools;
@@ -16,90 +17,30 @@ if (args.Length < 2)
 var command = args[0].ToLower();
 var argument = args[1];
 
+var localSemanticMotor = new LocalSemanticMotor();
+
 Console.WriteLine("1. Iniciando entorno y configurando almacenamiento local...");
 
 try
 {
-    // 2. Configuración de Persistencia Local
-    var storageDirectory = "MemoriaLocal";
-    Directory.CreateDirectory(storageDirectory);
-
-    var ollamaEndpoint = "http://localhost:11434";
-    var config = new OllamaConfig
-    {
-        Endpoint = ollamaEndpoint,
-        TextModel = new OllamaModelConfig("llama3"),
-        EmbeddingModel = new OllamaModelConfig("nomic-embed-text"),
-    };
-
-    // 3. Construimos el motor CON persistencia en disco
-    var memory = new KernelMemoryBuilder()
-        .WithOllamaTextGeneration(config)
-        .WithOllamaTextEmbeddingGeneration(config)
-        .WithSimpleFileStorage(
-            new SimpleFileStorageConfig
-            {
-                Directory = storageDirectory,
-                StorageType = FileSystemTypes.Disk,
-            }
-        )
-        .WithSimpleVectorDb(
-            new SimpleVectorDbConfig
-            {
-                Directory = storageDirectory,
-                StorageType = FileSystemTypes.Disk,
-            }
-        )
-        .Build<MemoryServerless>();
-
     // 4. Ejecución de la acción solicitada
     if (command == "ingest")
     {
-        var filePath = argument;
-        if (!File.Exists(filePath))
-        {
-            Console.WriteLine($"Error: Archivo no encontrado en '{filePath}'");
-            return;
-        }
-
-        Console.WriteLine($"2. Ingiriendo documento: {filePath}...");
-        Console.WriteLine("Procesando vectores... (esto depende enteramente de tu CPU/GPU)");
-
-        // Usamos el nombre del archivo como ID para la base de datos
-        await memory.ImportDocumentAsync(filePath, documentId: Path.GetFileName(filePath));
-
-        Console.WriteLine(
-            "\n¡Ingesta completada exitosamente! Los vectores están seguros en el disco."
-        );
+        await localSemanticMotor.IngestAsync(argument, "Docs");
+    }
+    else if (command == "ingest-folder")
+    {
+        await localSemanticMotor.IngestFolderAsync(argument);
     }
     else if (command == "ask")
     {
-        var question = argument;
-        var language = args.Length > 2 ? args[2] : "español";
-        var promptFinal =
-            $"{question}\n\n[INSTRUCCIÓN ESTRICTA: Redacta tu respuesta final única y exclusivamente en {language}]\n[INSTRUCCIÓN ESTRICTA: Respuestas breves].";
-
-        Console.WriteLine(
-            $"2. Buscando en la base de datos vectorial y redactando en {language}..."
-        );
-
-        var answer = await memory.AskAsync(promptFinal);
-
-        Console.WriteLine("\n================ RESPUESTA ================");
-        Console.WriteLine(answer.Result);
-        Console.WriteLine("===========================================\n");
+        string language = args.Length > 2 ? args[2] : "español";
+        var filter = args.Length > 3 ? args[3] : "";
+        await localSemanticMotor.AskQuestionAsync(argument, language, filter);
     }
     else if (command == "delete")
     {
-        var fileName = argument;
-
-        Console.WriteLine(
-            $"2. Buscando y eliminando el documento '{fileName}' de la memoria local..."
-        );
-        await memory.DeleteDocumentAsync(documentId: fileName);
-        Console.WriteLine(
-            "¡Operación completada! Los vectores de este documento han sido borrados del disco."
-        );
+        await localSemanticMotor.DeleteAsync(argument);
     }
     else
     {
