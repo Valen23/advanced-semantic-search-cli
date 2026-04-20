@@ -5,7 +5,7 @@ using Microsoft.KernelMemory.DocumentStorage.DevTools;
 using Microsoft.KernelMemory.FileSystem.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
 
-// 1. Enrutador de comandos
+// Enrutador de comandos
 if (args.Length < 2)
 {
     Console.WriteLine("Uso de la CLI:");
@@ -23,7 +23,7 @@ Console.WriteLine("1. Iniciando entorno y configurando almacenamiento local...")
 
 try
 {
-    // 4. Ejecución de la acción solicitada
+    // Commands Handler
     if (command == "ingest")
     {
         await localSemanticMotor.IngestAsync(argument, "Docs");
@@ -40,7 +40,7 @@ try
     }
     else if (command == "delete")
     {
-        await localSemanticMotor.DeleteAsync(argument);
+        await localSemanticMotor.DeleteDocumentAsync(argument);
     }
     else
     {
