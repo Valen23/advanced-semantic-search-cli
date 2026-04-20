@@ -1,3 +1,41 @@
-MemoriaLocal
-bin
-obj
+# .NET Core
+[Bb]in/
+[Oo]bj/
+[Tt]emp/
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# App Settings & Secrets
+appsettings.Development.json
+# appsettings.json # Generalmente se sube la estructura, pero se ignoran los secretos. 
+# Si el appsettings.json tiene claves reales (como una API Key), deberíamos ignorarlo.
+
+# Local DB / Kernel Memory Storage
+MemoriaLocal/
+*.db
+*.sqlite
