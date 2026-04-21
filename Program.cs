@@ -16,6 +16,7 @@ string? storageDirectory = configuration["SemanticEngine:StorageDirectory"];
 string? ollamaUrl = configuration["SemanticEngine:OllamaEndpoint"];
 string? textModel = configuration["SemanticEngine:TextModel"];
 string? embeddingModel = configuration["SemanticEngine:EmbeddingModel"];
+string? initialTheme = configuration["SemanticEngine:Theme"] ?? "Cyberpunk";
 
 if (string.IsNullOrWhiteSpace(storageDirectory))
     throw new Exception("Falta configuración crítica: 'SemanticEngine:StorageDirectory'");
@@ -38,7 +39,7 @@ var localSemanticMotor = new LocalSemanticMotor(
 
 if (args.Length == 0)
 {
-    var repl = new ReplEnvironment(localSemanticMotor);
+    var repl = new ReplEnvironment(localSemanticMotor, initialTheme);
     await repl.StartLoopAsync();
     return;
 }
