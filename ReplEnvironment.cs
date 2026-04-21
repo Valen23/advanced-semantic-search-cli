@@ -49,7 +49,7 @@ public class ReplEnvironment
             Assembly
                 .GetExecutingAssembly()
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                ?.InformationalVersion
+                ?.InformationalVersion.Split('+')[0]
             ?? "1.0.0";
 
         string banner =
@@ -203,34 +203,34 @@ public class ReplEnvironment
             $"\n{t.Primary}{TerminalColors.Bold}COMANDOS DISPONIBLES:{TerminalColors.Reset}"
         );
         Console.WriteLine(
-            $"{t.Accent}  ingest \"<ruta>\"{TerminalColors.Reset}       - Ingiere un archivo"
+            $"{t.Accent}  ingest \"<ruta>\"{TerminalColors.Reset}           - Ingiere un archivo"
         );
         Console.WriteLine(
-            $"{t.Accent}  ingest-folder \"<ruta>\"{TerminalColors.Reset}- Ingiere una carpeta completa"
+            $"{t.Accent}  ingest-folder \"<ruta>\"{TerminalColors.Reset}    - Ingiere una carpeta completa"
         );
         Console.WriteLine(
-            $"{t.Accent}  ask \"<pregunta>\"{TerminalColors.Reset}       - Realiza una consulta"
+            $"{t.Accent}  ask \"<pregunta>\"{TerminalColors.Reset}          - Realiza una consulta"
         );
         Console.WriteLine(
-            $"{t.Accent}  delete \"<id>\"{TerminalColors.Reset}           - Borra un documento"
+            $"{t.Accent}  delete \"<id>\"{TerminalColors.Reset}             - Borra un documento"
         );
         Console.WriteLine(
-            $"{t.Accent}  set-lang <idioma>{TerminalColors.Reset}     - Cambia el idioma de respuesta"
+            $"{t.Accent}  set-lang <idioma>{TerminalColors.Reset}           - Cambia el idioma de respuesta"
         );
         Console.WriteLine(
-            $"{t.Accent}  set-filter <tag:val>{TerminalColors.Reset}  - Filtra las búsquedas"
+            $"{t.Accent}  set-filter <tag:val>{TerminalColors.Reset}        - Filtra las búsquedas"
         );
         Console.WriteLine(
-            $"{t.Accent}  set-theme <nombre>{TerminalColors.Reset}    - Cambia el tema (Gotham, Rust, Neon-Vapor, Forest, Glacier)"
+            $"{t.Accent}  set-theme <nombre>{TerminalColors.Reset}          - Cambia el tema (Gotham, Rust, Neon-Vapor, Forest, Glacier)"
         );
         Console.WriteLine(
-            $"{t.Accent}  clear / cls{TerminalColors.Reset}            - Limpia la pantalla y muestra el banner"
+            $"{t.Accent}  clear / cls{TerminalColors.Reset}                 - Limpia la pantalla y muestra el banner"
         );
         Console.WriteLine(
-            $"{t.Accent}  help{TerminalColors.Reset}                   - Muestra esta ayuda"
+            $"{t.Accent}  help{TerminalColors.Reset}                        - Muestra esta ayuda"
         );
         Console.WriteLine(
-            $"{t.Accent}  exit{TerminalColors.Reset}                   - Sale del programa\n"
+            $"{t.Accent}  exit{TerminalColors.Reset}                        - Sale del programa\n"
         );
     }
 

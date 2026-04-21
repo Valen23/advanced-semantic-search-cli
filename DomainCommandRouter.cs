@@ -101,12 +101,11 @@ public class DomainCommandRouter
         string question = arguments[0];
 
         var cts = new CancellationTokenSource();
-        var spinnerTask = Task.Run(() =>
-            ShowSpinner("Buscando en la base de datos semántica...", t, cts.Token)
-        );
+        var spinnerTask = ShowSpinner("Buscando en la base de datos semántica...", t, cts.Token);
 
         try
         {
+            Console.WriteLine();
             var result = await _motor.AskQuestionStreamAsync(question, language, filter);
 
             cts.Cancel();
@@ -155,7 +154,7 @@ public class DomainCommandRouter
     /// <summary>
     /// Muestra una animación de spinner en la consola mientras se realiza una tarea asíncrona.
     /// </summary>
-    private async void ShowSpinner(string message, CliTheme t, CancellationToken token)
+    private async Task ShowSpinner(string message, CliTheme t, CancellationToken token)
     {
         string[] frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
         int i = 0;
