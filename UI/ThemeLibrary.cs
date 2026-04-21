@@ -8,8 +8,14 @@ namespace UI;
 /// </summary>
 public static class ThemeLibrary
 {
+    /// <summary>
+    /// Nombre del tema por defecto si no se encuentra el especificado.
+    /// </summary>
     public const string DefaultThemeName = "Gotham";
 
+    /// <summary>
+    /// Almacén interno de temas disponibles indexados por nombre.
+    /// </summary>
     private static readonly Dictionary<string, CliTheme> Themes = new(
         StringComparer.OrdinalIgnoreCase
     )

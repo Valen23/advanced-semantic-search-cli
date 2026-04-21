@@ -3,6 +3,10 @@ using UI;
 
 namespace CLI.Routing;
 
+/// <summary>
+/// Enruta y ejecuta los comandos relacionados con el dominio semántico (búsqueda, ingesta, eliminación).
+/// Se encarga de la lógica de presentación y flujo de usuario para estos comandos.
+/// </summary>
 public class DomainCommandRouter
 {
     private readonly ISemanticMotor _motor;
@@ -12,6 +16,14 @@ public class DomainCommandRouter
         _motor = motor;
     }
 
+    /// <summary>
+    /// Ejecuta el comando especificado utilizando los argumentos y configuración de sesión provistos.
+    /// </summary>
+    /// <param name="command">Nombre del comando a ejecutar.</param>
+    /// <param name="arguments">Lista de argumentos para el comando.</param>
+    /// <param name="language">Idioma actual de la sesión para las respuestas.</param>
+    /// <param name="filter">Filtro de búsqueda actual.</param>
+    /// <param name="t">Tema visual activo.</param>
     public async Task ExecuteAsync(
         string command,
         string[] arguments,
@@ -64,6 +76,9 @@ public class DomainCommandRouter
         }
     }
 
+    /// <summary>
+    /// Maneja el comando 'ask', incluyendo el spinner de carga y el renderizado de la respuesta en streaming.
+    /// </summary>
     private async Task HandleAskCommandAsync(
         string[] arguments,
         string language,
@@ -81,7 +96,6 @@ public class DomainCommandRouter
 
         string question = arguments[0];
 
-        // 1. EFECTO DE CARGA (SPINNER)
         var cts = new CancellationTokenSource();
         var spinnerTask = Task.Run(() =>
             ShowSpinner("Buscando en la base de datos semántica...", t, cts.Token)
@@ -89,15 +103,12 @@ public class DomainCommandRouter
 
         try
         {
-            // 2. LLAMADA AL MOTOR
             var result = await _motor.AskQuestionStreamAsync(question, language, filter);
 
-            // DETENEMOS SPINNER
             cts.Cancel();
             await spinnerTask;
-            Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r"); // Limpia línea del spinner
+            Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
 
-            // 3. RENDERIZADO DE CITAS (FUENTES)
             Console.WriteLine(
                 $"\n{t.Secondary}{TerminalColors.Bold}  FUENTES RELEVANTES:{TerminalColors.Reset}"
             );
@@ -112,13 +123,11 @@ public class DomainCommandRouter
                 }
             }
 
-            // 4. HEADER DE RESPUESTA
             Console.WriteLine(
                 $"\n{t.Primary}{TerminalColors.Bold}  RESPUESTA:{TerminalColors.Reset}"
             );
             Console.ForegroundColor = GetConsoleColorFromHex(t.Primary);
 
-            // 5. CONSUMO DEL STREAM
             await foreach (var token in result.TextStream)
             {
                 Console.Write(token);
@@ -139,6 +148,9 @@ public class DomainCommandRouter
         }
     }
 
+    /// <summary>
+    /// Muestra una animación de spinner en la consola mientras se realiza una tarea asíncrona.
+    /// </summary>
     private void ShowSpinner(string message, CliTheme t, CancellationToken token)
     {
         string[] frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
@@ -153,13 +165,11 @@ public class DomainCommandRouter
         }
     }
 
+    /// <summary>
+    /// Intenta mapear un código ANSI o color hexadecimal a un ConsoleColor (Fallback).
+    /// </summary>
     private ConsoleColor GetConsoleColorFromHex(string hex)
     {
-        // Mapeo simple de colores comunes para la consola basados en los códigos ANSI
-        // Esto es un fallback, ya que estamos usando códigos ANSI directamente en las propiedades del tema.
-        // Pero para el streaming usaremos el color primario directamente si es posible.
-        // Dado que t.Primary contiene el código ANSI (ej: \u001b[38;5;...),
-        // lo mejor es imprimir el código ANSI antes del loop.
-        return ConsoleColor.Gray; // No se usa si inyectamos el ANSI directamente
+        return ConsoleColor.Gray;
     }
 }

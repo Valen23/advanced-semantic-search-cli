@@ -81,6 +81,11 @@ public class LocalSemanticMotor : ISemanticMotor
             .Trim('-');
     }
 
+    /// <summary>
+    /// Intenta parsear un string de filtro en el formato "clave:valor".
+    /// </summary>
+    /// <param name="filterArg">El string de entrada (ej: "category:docs").</param>
+    /// <returns>Un MemoryFilter configurado, o null si el formato es inválido o el string es nulo.</returns>
     private MemoryFilter? ParseFilter(string? filterArg)
     {
         if (string.IsNullOrWhiteSpace(filterArg))
@@ -117,7 +122,6 @@ public class LocalSemanticMotor : ISemanticMotor
         var fileTags = new TagCollection();
         string[] pathParts = relativePath.Split(Path.DirectorySeparatorChar);
 
-        // Agregamos cada carpeta del path como una categoría
         for (int i = 0; i < pathParts.Length - 1; i++)
         {
             fileTags.Add("category", pathParts[i]);
@@ -165,10 +169,8 @@ public class LocalSemanticMotor : ISemanticMotor
             string relativePath = Path.GetRelativePath(folderPath, filePath);
             string[] pathParts = relativePath.Split(Path.DirectorySeparatorChar);
 
-            // Evitamos colisiones usando el relativePath como DocumentId
             string documentId = NormalizeDocumentId(relativePath);
 
-            // Tags jerárquicos consistentes
             for (int i = 0; i < pathParts.Length - 1; i++)
             {
                 fileTags.Add("category", pathParts[i]);
@@ -250,32 +252,32 @@ public class LocalSemanticMotor : ISemanticMotor
         return answer.Result;
     }
 
-    public async Task AskQuestionStreamAsync(string question, string language, string? filterArg)
+    /// <summary>
+    /// Realiza una consulta asíncrona devolviendo un stream de texto y los resultados de la búsqueda (RAG).
+    /// </summary>
+    /// <param name="question">La pregunta del usuario.</param>
+    /// <param name="language">Idioma final de la respuesta (instrucción en el prompt).</param>
+    /// <param name="filterArg">Filtro por tag (opcional, formato "clave:valor").</param>
+    /// <returns>Un objeto con los resultados de Kernel Memory y el stream de Semantic Kernel.</returns>
+    public async Task<SemanticStreamResult> AskQuestionStreamAsync(
+        string question,
+        string language,
+        string? filterArg
+    )
     {
-        // Lógica de parseo de filtro (ya la tienes resuelta)
         MemoryFilter? myFilter = ParseFilter(filterArg);
 
-        Console.WriteLine($"2. Buscando fragmentos relevantes en la base de datos local...");
-
-        // PASO 1: RETRIEVAL (Solo buscar, no generar texto)
         SearchResult searchResult = await _memory.SearchAsync(question, filter: myFilter);
 
-        // PASO 2: CONSTRUCCIÓN DEL CONTEXTO (Tu tarea)
         string contextBuilder = string.Empty;
-        // TODO: Iterar sobre searchResult.Results y sus Partitions.
-        // Extraer el texto de cada partición y concatenarlo en la variable contextBuilder.
-        // Imprimir las fuentes (citas) en este momento, antes de generar la respuesta.
         foreach (var result in searchResult.Results)
         {
-            Console.WriteLine($"\n Fuente: {result.SourceName}");
             foreach (var partition in result.Partitions)
             {
                 contextBuilder += partition.Text + "\n";
-                Console.WriteLine($"  ├─ Relevancia: {partition.Relevance:P1}");
             }
         }
 
-        // PASO 3: EL PROMPT MAESTRO
         string finalPrompt =
             $@"
         Basado en la siguiente información de contexto:
@@ -287,23 +289,23 @@ public class LocalSemanticMotor : ISemanticMotor
         [INSTRUCCIÓN ESTRICTA: Respuestas breves]
     ";
 
-        Console.WriteLine("\n================ RESPUESTA ================");
-        // 1. Configuramos el cliente de streaming
         var builder = Kernel.CreateBuilder();
         builder.AddOllamaChatCompletion(_textModel, new Uri(_ollamaUrl));
         var kernel = builder.Build();
 
         var chatService = kernel.GetRequiredService<IChatCompletionService>();
 
-        // 2. Iniciamos el streaming
         var streamingResult = chatService.GetStreamingChatMessageContentsAsync(finalPrompt);
 
-        await foreach (var chunk in streamingResult)
+        async IAsyncEnumerable<string> GetTextStream()
         {
-            Console.Write(chunk.Content); // Imprime cada palabra/token en tiempo real
+            await foreach (var chunk in streamingResult)
+            {
+                yield return chunk.Content ?? string.Empty;
+            }
         }
 
-        Console.WriteLine("\n===========================================\n");
+        return new SemanticStreamResult(searchResult, GetTextStream());
     }
 
     /// <summary>

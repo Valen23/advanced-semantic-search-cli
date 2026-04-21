@@ -6,6 +6,10 @@ using UI;
 
 namespace Repl;
 
+/// <summary>
+/// Provee el entorno de ejecución REPL (Read-Eval-Print Loop) para la consola interactiva.
+/// Gestiona el estado de la sesión, la configuración visual y el enrutamiento de comandos básicos.
+/// </summary>
 public class ReplEnvironment
 {
     private readonly ISemanticMotor _motor;
@@ -14,6 +18,9 @@ public class ReplEnvironment
     private string _currentFilter = string.Empty;
     private string _themeName;
 
+    /// <summary>
+    /// Obtiene el objeto de tema actual basado en el nombre configurado.
+    /// </summary>
     private CliTheme CurrentTheme => ThemeLibrary.GetTheme(_themeName);
 
     public ReplEnvironment(ISemanticMotor motor, string themeName)
@@ -23,6 +30,9 @@ public class ReplEnvironment
         _domainRouter = new DomainCommandRouter(motor);
     }
 
+    /// <summary>
+    /// Imprime el banner ASCII del programa utilizando los colores del tema actual.
+    /// </summary>
     private void PrintBanner()
     {
         var t = CurrentTheme;
@@ -42,6 +52,9 @@ public class ReplEnvironment
         Console.WriteLine(banner);
     }
 
+    /// <summary>
+    /// Inicia el bucle interactivo de la consola, procesando la entrada del usuario hasta que se solicite salir.
+    /// </summary>
     public async Task StartLoopAsync()
     {
         bool isRunning = true;
@@ -51,7 +64,6 @@ public class ReplEnvironment
 
         while (isRunning)
         {
-            // 1. READ (Prompt Dinámico y con Colores)
             var t = CurrentTheme;
             string filterText = string.IsNullOrEmpty(_currentFilter) ? "ninguno" : _currentFilter;
 
@@ -82,7 +94,6 @@ public class ReplEnvironment
 
             try
             {
-                // COMANDOS DE ENTORNO
                 if (command == "clear" || command == "cls")
                 {
                     Console.Clear();
@@ -141,13 +152,12 @@ public class ReplEnvironment
                 }
                 else
                 {
-                    // COMANDOS DE DOMINIO (Delegados al Router)
                     await _domainRouter.ExecuteAsync(
                         command,
                         commandArgs,
                         _currentLanguage,
                         _currentFilter,
-                        t // Pasamos el tema actual
+                        t // Tema actual
                     );
                 }
             }
@@ -170,6 +180,9 @@ public class ReplEnvironment
         );
     }
 
+    /// <summary>
+    /// Muestra la lista de comandos disponibles y su descripción.
+    /// </summary>
     private void PrintHelp()
     {
         var t = CurrentTheme;
@@ -208,6 +221,10 @@ public class ReplEnvironment
         );
     }
 
+    /// <summary>
+    /// Persiste la selección del tema en el archivo appsettings.json.
+    /// </summary>
+    /// <param name="themeName">Nombre del tema a guardar.</param>
     private async Task SaveThemeToConfigAsync(string themeName)
     {
         try
