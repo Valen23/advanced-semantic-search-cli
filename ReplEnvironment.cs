@@ -1,7 +1,7 @@
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Interfaces;
+using UI;
 
 namespace Repl;
 
@@ -12,59 +12,7 @@ public class ReplEnvironment
     private string _currentFilter = string.Empty;
     private string _themeName;
 
-    // Colores ANSI 256 para mayor profundidad visual
-    private static class Colors
-    {
-        public const string Reset = "\u001b[0m";
-        public const string Bold = "\u001b[1m";
-        public const string Cyan = "\u001b[38;5;103m"; // Steel Blue-Gray (More visible)
-        public const string Magenta = "\u001b[38;5;67m"; // Shadow Blue (More visible)
-        public const string Yellow = "\u001b[38;5;214m"; // Gold / Utility Belt Yellow
-        public const string Green = "\u001b[38;5;108m"; // Sage / Muted Success
-        public const string Blue = "\u001b[38;5;110m"; // Cold Steel Blue
-        public const string Orange = "\u001b[38;5;172m"; // Amber
-        public const string Gray = "\u001b[38;5;244m"; // Medium Gray
-        public const string Red = "\u001b[38;5;167m"; // Muted Crimson
-    }
-
-    private record CliTheme(
-        string Primary,
-        string Secondary,
-        string Accent,
-        string Success,
-        string Error
-    );
-
-    private static readonly Dictionary<string, CliTheme> Themes = new(
-        StringComparer.OrdinalIgnoreCase
-    )
-    {
-        ["Cyberpunk"] = new CliTheme(
-            Colors.Magenta,
-            Colors.Cyan,
-            Colors.Yellow,
-            Colors.Green,
-            Colors.Red
-        ),
-        ["Midnight"] = new CliTheme(Colors.Blue, Colors.Gray, Colors.Bold, Colors.Cyan, Colors.Red),
-        ["Emerald"] = new CliTheme(
-            Colors.Green,
-            Colors.Bold,
-            Colors.Cyan,
-            Colors.Yellow,
-            Colors.Red
-        ),
-        ["Sunset"] = new CliTheme(
-            Colors.Orange,
-            Colors.Magenta,
-            Colors.Yellow,
-            Colors.Cyan,
-            Colors.Red
-        ),
-    };
-
-    private CliTheme CurrentTheme =>
-        Themes.TryGetValue(_themeName, out var t) ? t : Themes["Cyberpunk"];
+    private CliTheme CurrentTheme => ThemeLibrary.GetTheme(_themeName);
 
     public ReplEnvironment(ISemanticMotor motor, string themeName)
     {
@@ -80,13 +28,13 @@ public class ReplEnvironment
 
         string banner =
             $@"
-{t.Primary}{Colors.Bold}  _____ ______ __  __          _   _ _______ _____ _____ 
+{t.Primary}{TerminalColors.Bold}  _____ ______ __  __          _   _ _______ _____ _____ 
  / ____|  ____|  \/  |   /\   | \ | |__   __|_   _/ ____|
 | (___ | |__  | \  / |  /  \  |  \| |  | |    | || |     
  \___ \|  __| | |\/| | / /\ \ | . ` |  | |    | || |     
  ____) | |____| |  | |/ ____ \| |\  |  | |   _| || |____ 
 |_____/|______|_|  |_/_/    \_\_| \_|  |_|  |_____\_____|
-{t.Secondary}           SEARCH ENGINE - SEMANTIC CLI v0.5{Colors.Reset}
+{t.Secondary}           SEARCH ENGINE - SEMANTIC CLI v0.5{TerminalColors.Reset}
 ";
         Console.WriteLine(banner);
     }
@@ -95,7 +43,7 @@ public class ReplEnvironment
     {
         PrintBanner();
         Console.WriteLine(
-            $"{CurrentTheme.Secondary}Iniciando Modo Interactivo. Escribe 'help' para ver comandos.{Colors.Reset}"
+            $"{CurrentTheme.Secondary}Iniciando Modo Interactivo. Escribe 'help' para ver comandos.{TerminalColors.Reset}"
         );
         bool isRunning = true;
 
@@ -108,10 +56,10 @@ public class ReplEnvironment
             var t = CurrentTheme;
             string filterText = string.IsNullOrEmpty(_currentFilter) ? "ninguno" : _currentFilter;
 
-            Console.Write($"\n{t.Primary}rag-cli{Colors.Reset} ");
-            Console.Write($"{t.Secondary}({_currentLanguage}){Colors.Reset} ");
+            Console.Write($"\n{t.Primary}rag-cli{TerminalColors.Reset} ");
+            Console.Write($"{t.Secondary}({_currentLanguage}){TerminalColors.Reset} ");
             Console.Write(
-                $"{t.Accent}[filtro:{filterText}]{Colors.Reset} {t.Primary}>{Colors.Reset} "
+                $"{t.Accent}[filtro:{filterText}]{TerminalColors.Reset} {t.Primary}>{TerminalColors.Reset} "
             );
 
             string? input = Console.ReadLine();
@@ -195,7 +143,7 @@ public class ReplEnvironment
                     if (parts.Length < 2)
                     {
                         Console.WriteLine(
-                            $"{CurrentTheme.Error}Uso: set-filter \"category:Contabilidad\"{Colors.Reset}"
+                            $"{CurrentTheme.Error}Uso: set-filter \"category:Contabilidad\"{TerminalColors.Reset}"
                         );
                         continue;
                     }
@@ -203,16 +151,16 @@ public class ReplEnvironment
                     {
                         _currentFilter = argument;
                         Console.WriteLine(
-                            $"{CurrentTheme.Success}Filtro de la sesión cambiado a: {_currentFilter}{Colors.Reset}"
+                            $"{CurrentTheme.Success}Filtro de la sesión cambiado a: {_currentFilter}{TerminalColors.Reset}"
                         );
                     }
                 }
                 else if (command == "set-theme")
                 {
-                    if (parts.Length < 2 || !Themes.ContainsKey(argument))
+                    if (parts.Length < 2 || !ThemeLibrary.IsValidTheme(argument))
                     {
                         Console.WriteLine(
-                            $"{CurrentTheme.Error}Temas disponibles: {string.Join(", ", Themes.Keys)}{Colors.Reset}"
+                            $"{CurrentTheme.Error}Temas disponibles: {string.Join(", ", ThemeLibrary.GetAvailableThemes())}{TerminalColors.Reset}"
                         );
                         continue;
                     }
@@ -220,7 +168,7 @@ public class ReplEnvironment
                     _themeName = argument;
                     await SaveThemeToConfigAsync(_themeName);
                     Console.WriteLine(
-                        $"{CurrentTheme.Success}Tema cambiado a: {_themeName}{Colors.Reset}"
+                        $"{CurrentTheme.Success}Tema cambiado a: {_themeName}{TerminalColors.Reset}"
                     );
                 }
                 else if (command == "help")
@@ -230,43 +178,49 @@ public class ReplEnvironment
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{CurrentTheme.Error}[Error]: {ex.Message}{Colors.Reset}");
+                Console.WriteLine(
+                    $"{CurrentTheme.Error}[Error]: {ex.Message}{TerminalColors.Reset}"
+                );
             }
         }
 
         Console.WriteLine(
-            $"{CurrentTheme.Secondary}Sesión finalizada. Cerrando motor...{Colors.Reset}"
+            $"{CurrentTheme.Secondary}Sesión finalizada. Cerrando motor...{TerminalColors.Reset}"
         );
     }
 
     private void PrintHelp()
     {
         var t = CurrentTheme;
-        Console.WriteLine($"\n{t.Primary}{Colors.Bold}COMANDOS DISPONIBLES:{Colors.Reset}");
         Console.WriteLine(
-            $"{t.Accent}  ingest \"<ruta>\"{Colors.Reset}       - Ingiere un archivo"
+            $"\n{t.Primary}{TerminalColors.Bold}COMANDOS DISPONIBLES:{TerminalColors.Reset}"
         );
         Console.WriteLine(
-            $"{t.Accent}  ingest-folder \"<ruta>\"{Colors.Reset}- Ingiere una carpeta completa"
+            $"{t.Accent}  ingest \"<ruta>\"{TerminalColors.Reset}       - Ingiere un archivo"
         );
         Console.WriteLine(
-            $"{t.Accent}  ask \"<pregunta>\"{Colors.Reset}       - Realiza una consulta"
+            $"{t.Accent}  ingest-folder \"<ruta>\"{TerminalColors.Reset}- Ingiere una carpeta completa"
         );
         Console.WriteLine(
-            $"{t.Accent}  delete \"<id>\"{Colors.Reset}           - Borra un documento"
+            $"{t.Accent}  ask \"<pregunta>\"{TerminalColors.Reset}       - Realiza una consulta"
         );
         Console.WriteLine(
-            $"{t.Accent}  set-lang <idioma>{Colors.Reset}     - Cambia el idioma de respuesta"
+            $"{t.Accent}  delete \"<id>\"{TerminalColors.Reset}           - Borra un documento"
         );
         Console.WriteLine(
-            $"{t.Accent}  set-filter <tag:val>{Colors.Reset}  - Filtra las búsquedas"
+            $"{t.Accent}  set-lang <idioma>{TerminalColors.Reset}     - Cambia el idioma de respuesta"
         );
         Console.WriteLine(
-            $"{t.Accent}  set-theme <nombre>{Colors.Reset}    - Cambia el tema (Cyberpunk, Emerald, Midnight, Sunset)"
+            $"{t.Accent}  set-filter <tag:val>{TerminalColors.Reset}  - Filtra las búsquedas"
         );
-        Console.WriteLine($"{t.Accent}  help{Colors.Reset}                   - Muestra esta ayuda");
         Console.WriteLine(
-            $"{t.Accent}  exit{Colors.Reset}                   - Sale del programa\n"
+            $"{t.Accent}  set-theme <nombre>{TerminalColors.Reset}    - Cambia el tema (Gotham, Rust, Neon-Vapor, Forest, Glacier)"
+        );
+        Console.WriteLine(
+            $"{t.Accent}  help{TerminalColors.Reset}                   - Muestra esta ayuda"
+        );
+        Console.WriteLine(
+            $"{t.Accent}  exit{TerminalColors.Reset}                   - Sale del programa\n"
         );
     }
 
