@@ -11,6 +11,10 @@ public class DomainCommandRouter
 {
     private readonly ISemanticMotor _motor;
 
+    /// <summary>
+    /// Inicializa una nueva instancia de <see cref="DomainCommandRouter"/>.
+    /// </summary>
+    /// <param name="motor">El motor semántico a utilizar para las operaciones de dominio.</param>
     public DomainCommandRouter(ISemanticMotor motor)
     {
         _motor = motor;

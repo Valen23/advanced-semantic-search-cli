@@ -105,5 +105,35 @@ Estos comandos gestionan la base de datos de vectores.
 
 ---
 
+## Desarrollo y Contribución
+
+Este proyecto sigue un flujo de trabajo profesional para garantizar la estabilidad y el versionamiento automático.
+
+### 1. Convencionalismo de Commits
+
+Para mantener un historial claro y permitir la automatización, se recomienda seguir el estándar de [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` Nuevas funcionalidades (ej: `feat: streaming de respuesta`).
+- `fix:` Corrección de errores.
+- `refactor:` Cambios que no añaden funcionalidades ni arreglan bugs.
+- `chore:` Tareas de mantenimiento o configuración.
+
+### 2. Versionamiento Automático
+
+Las versiones se calculan automáticamente basándose en los **Git Tags** utilizando MinVer.
+
+- Para crear una nueva versión, simplemente añade un tag y súbelo:
+  ```bash
+  git tag v1.0.0
+  git push origin v1.0.0
+  ```
+
+### 3. CI/CD
+
+- **Verificación**: Cada Pull Request o Push a `main` activa una compilación automática para validar la integridad del código.
+- **Release**: Al subir un tag `v*`, GitHub Actions generará automáticamente una nueva "Release" con binarios compilados para Windows y Linux.
+
+---
+
 > [!TIP]
 > Para obtener la mejor precisión, se recomienda organizar los documentos en carpetas temáticas; el sistema utilizará los nombres de las carpetas como etiquetas automáticas para facilitar el filtrado posterior.

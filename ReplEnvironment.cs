@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using CLI.Routing;
@@ -23,6 +24,11 @@ public class ReplEnvironment
     /// </summary>
     private CliTheme CurrentTheme => ThemeLibrary.GetTheme(_themeName);
 
+    /// <summary>
+    /// Inicializa una nueva instancia de <see cref="ReplEnvironment"/>.
+    /// </summary>
+    /// <param name="motor">El motor semántico que procesará las consultas.</param>
+    /// <param name="themeName">El nombre del tema visual inicial.</param>
     public ReplEnvironment(ISemanticMotor motor, string themeName)
     {
         _motor = motor;
@@ -39,6 +45,13 @@ public class ReplEnvironment
         Console.ForegroundColor = ConsoleColor.Black; // Hack para limpiar si hay bordes
         Console.ResetColor();
 
+        var version =
+            Assembly
+                .GetExecutingAssembly()
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion
+            ?? "1.0.0";
+
         string banner =
             $@"
 {t.Primary}{TerminalColors.Bold}  _____ ______ __  __          _   _ _______ _____ _____ 
@@ -47,7 +60,7 @@ public class ReplEnvironment
  \___ \|  __| | |\/| | / /\ \ | . ` |  | |    | || |     
  ____) | |____| |  | |/ ____ \| |\  |  | |   _| || |____ 
 |_____/|______|_|  |_/_/    \_\_| \_|  |_|  |_____\_____|
-{t.Secondary}           SEARCH ENGINE - SEMANTIC CLI v1.0{TerminalColors.Reset}
+{t.Secondary}           SEARCH ENGINE - SEMANTIC CLI v{version}{TerminalColors.Reset}
 ";
         Console.WriteLine(banner);
     }

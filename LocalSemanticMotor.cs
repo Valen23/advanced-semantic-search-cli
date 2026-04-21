@@ -17,6 +17,9 @@ public class LocalSemanticMotor : ISemanticMotor
     private readonly string _ollamaUrl;
     private readonly string _textModel;
 
+    /// <summary>
+    /// Directorio base utilizado para el almacenamiento de la memoria local.
+    /// </summary>
     public string StorageDirectory { get; set; }
 
     /// <summary>

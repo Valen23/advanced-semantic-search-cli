@@ -1,0 +1,38 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish
+        run: dotnet publish -c Release -o ./publish /p:PublishSingleFile=true /p:SelfContained=false
+
+      - name: Rename executable (Linux/macOS)
+        run: mv ./publish/advanced-semantic-search-cli ./publish/advanced-semantic-cli-linux
+
+      - name: Publish Windows
+        run: dotnet publish -c Release -o ./publish-win /p:PublishSingleFile=true /p:SelfContained=false -r win-x64 --self-contained false
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./publish/advanced-semantic-cli-linux
+            ./publish-win/advanced-semantic-search-cli.exe
+          generate_release_notes: true

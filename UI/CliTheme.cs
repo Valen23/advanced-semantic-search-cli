@@ -5,8 +5,19 @@ namespace UI;
 /// </summary>
 public static class TerminalColors
 {
+    /// <summary>
+    /// Secuencia ANSI para restablecer todos los estilos y colores.
+    /// </summary>
     public const string Reset = "\u001b[0m";
+
+    /// <summary>
+    /// Secuencia ANSI para texto en negrita.
+    /// </summary>
     public const string Bold = "\u001b[1m";
+
+    /// <summary>
+    /// Secuencia ANSI para texto subrayado.
+    /// </summary>
     public const string Underline = "\u001b[4m";
 }
 
