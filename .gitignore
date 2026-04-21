@@ -1,7 +1,10 @@
+# User Privacy
+Docs/*
+!Docs/.gitkeep
+
 # scripts
 export-code.ps1
 codigo_completo.txt
-Docs/
 
 # .NET Core
 [Bb]in/
