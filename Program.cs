@@ -59,4 +59,5 @@ if (args.Length < 2)
 var command = args[0].ToLower();
 var argument = args[1];
 
-await router.ExecuteAsync(command, args.Skip(1).ToArray(), "español", "");
+var theme = UI.ThemeLibrary.GetTheme(initialTheme);
+await router.ExecuteAsync(command, args.Skip(1).ToArray(), "español", "", theme);
