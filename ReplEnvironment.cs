@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using CLI.Routing;
 using Interfaces;
 using UI;
 
@@ -8,6 +9,7 @@ namespace Repl;
 public class ReplEnvironment
 {
     private readonly ISemanticMotor _motor;
+    private readonly DomainCommandRouter _domainRouter;
     private string _currentLanguage = "español";
     private string _currentFilter = string.Empty;
     private string _themeName;
@@ -18,6 +20,7 @@ public class ReplEnvironment
     {
         _motor = motor;
         _themeName = themeName;
+        _domainRouter = new DomainCommandRouter(motor);
     }
 
     private void PrintBanner()
@@ -47,9 +50,6 @@ public class ReplEnvironment
         );
         bool isRunning = true;
 
-        string command;
-        string argument;
-
         while (isRunning)
         {
             // 1. READ (Prompt Dinámico y con Colores)
@@ -68,13 +68,12 @@ public class ReplEnvironment
                 continue;
 
             var matches = Regex.Matches(input, @"[^\s""]+|""([^""]*)""");
-
-            string clean = input.Trim();
             var parts = matches
                 .Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Value)
                 .ToArray();
-            command = parts[0].ToLower();
-            argument = parts.Length > 1 ? parts[1] : string.Empty;
+
+            string command = parts[0].ToLower();
+            string[] commandArgs = parts.Skip(1).ToArray();
 
             if (command == "exit" || command == "quit")
             {
@@ -84,80 +83,34 @@ public class ReplEnvironment
 
             try
             {
-                if (command == "ingest")
+                // COMANDOS DE ENTORNO
+                if (command == "set-lang")
                 {
-                    if (parts.Length > 2)
-                    {
-                        Console.WriteLine(
-                            "[Aviso]: Ruta con espacios detectada. ¿Olvidaste las comillas?"
-                        );
-                        Console.WriteLine(
-                            "Uso correcto: ingest \"C:\\Mis Documentos\\archivo.pdf\""
-                        );
-                    }
-                    await _motor.IngestAsync(argument, "Docs");
-                }
-                else if (command == "ingest-folder")
-                {
-                    await _motor.IngestFolderAsync(argument);
-                }
-                else if (command == "ask")
-                {
-                    if (parts.Length == 1)
-                    {
-                        Console.WriteLine("Uso correcto: ask \"¿Cuál es la capital de Francia?\"");
-                        continue;
-                    }
-                    else if (parts.Length > 2)
-                    {
-                        Console.WriteLine(
-                            "[Aviso]: Detectamos varias palabras sin comillas. Solo se procesará la primera."
-                        );
-                        Console.WriteLine("Uso correcto: ask \"¿Cuál es la capital de Francia?\"");
-                        continue;
-                    }
-                    else
-                    {
-                        await _motor.AskQuestionAsync(argument, _currentLanguage, _currentFilter);
-                    }
-                }
-                else if (command == "delete")
-                {
-                    await _motor.DeleteDocumentAsync(argument);
-                }
-                else if (command == "set-lang")
-                {
-                    if (parts.Length < 2)
+                    if (commandArgs.Length == 0)
                     {
                         Console.WriteLine("Uso: set-lang \"<idioma>\"");
                         continue;
                     }
-                    else
-                    {
-                        _currentLanguage = argument;
-                        Console.WriteLine($"Idioma de la sesión cambiado a: {_currentLanguage}");
-                    }
+                    _currentLanguage = commandArgs[0];
+                    Console.WriteLine($"Idioma de la sesión cambiado a: {_currentLanguage}");
                 }
                 else if (command == "set-filter")
                 {
-                    if (parts.Length < 2)
+                    if (commandArgs.Length == 0)
                     {
                         Console.WriteLine(
                             $"{CurrentTheme.Error}Uso: set-filter \"category:Contabilidad\"{TerminalColors.Reset}"
                         );
                         continue;
                     }
-                    else
-                    {
-                        _currentFilter = argument;
-                        Console.WriteLine(
-                            $"{CurrentTheme.Success}Filtro de la sesión cambiado a: {_currentFilter}{TerminalColors.Reset}"
-                        );
-                    }
+                    _currentFilter = commandArgs[0];
+                    Console.WriteLine(
+                        $"{CurrentTheme.Success}Filtro de la sesión cambiado a: {_currentFilter}{TerminalColors.Reset}"
+                    );
                 }
                 else if (command == "set-theme")
                 {
-                    if (parts.Length < 2 || !ThemeLibrary.IsValidTheme(argument))
+                    if (commandArgs.Length == 0 || !ThemeLibrary.IsValidTheme(commandArgs[0]))
                     {
                         Console.WriteLine(
                             $"{CurrentTheme.Error}Temas disponibles: {string.Join(", ", ThemeLibrary.GetAvailableThemes())}{TerminalColors.Reset}"
@@ -165,7 +118,7 @@ public class ReplEnvironment
                         continue;
                     }
 
-                    _themeName = argument;
+                    _themeName = commandArgs[0];
                     await SaveThemeToConfigAsync(_themeName);
                     Console.WriteLine(
                         $"{CurrentTheme.Success}Tema cambiado a: {_themeName}{TerminalColors.Reset}"
@@ -175,6 +128,22 @@ public class ReplEnvironment
                 {
                     PrintHelp();
                 }
+                else
+                {
+                    // COMANDOS DE DOMINIO (Delegados al Router)
+                    await _domainRouter.ExecuteAsync(
+                        command,
+                        commandArgs,
+                        _currentLanguage,
+                        _currentFilter
+                    );
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(
+                    $"{CurrentTheme.Error}[Comando Inválido]: {ex.Message}{TerminalColors.Reset}"
+                );
             }
             catch (Exception ex)
             {
