@@ -1,1 +1,0 @@
-El proyecto de Búsqueda Semántica Local está escrito en C# usando .NET 10. Su objetivo es leer archivos y responder preguntas usando modelos locales.

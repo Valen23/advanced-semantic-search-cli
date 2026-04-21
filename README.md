@@ -11,7 +11,6 @@ Una herramienta de línea de comandos profesional diseñada para la gestión y c
 
 - **Streaming Semántico**: Generación de respuestas en tiempo real (token por token) utilizando Semantic Kernel.
 - **Sistema de Temas Dinámicos**: Biblioteca de temas visuales integrada (Gotham, Rust, Neon-Vapor, Forest, Glacier) con persistencia automática.
-- **Feedback Visual Avanzado**: Implementación de indicadores de carga (spinners) y estilos ANSI de 256 colores para una experiencia de usuario premium.
 - **Arquitectura Desacoplada**: Separación estricta entre el motor semántico, el enrutador de comandos y el entorno de ejecución interactivo.
 - **Gestión de Sesión**: Soporte para filtros globales, cambio de idioma al vuelo y preservación de historial de comandos.
 
