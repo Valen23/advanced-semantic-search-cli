@@ -31,7 +31,8 @@ public interface ISemanticMotor
     /// Ingiere todos los documentos compatibles de una carpeta de forma recursiva.
     /// </summary>
     /// <param name="folderPath">Ruta de la carpeta a escanear.</param>
-    Task IngestFolderAsync(string folderPath);
+    /// <param name="rootPath">Opcional. Ruta raíz para determinar categorías.</param>
+    Task IngestFolderAsync(string folderPath, string? rootPath = null);
 
     /// <summary>
     /// Realiza una consulta síncrona que devuelve la respuesta completa como string.

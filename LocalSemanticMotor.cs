@@ -149,7 +149,8 @@ public class LocalSemanticMotor : ISemanticMotor
     /// Escanea un directorio completo e ingiere todos los archivos compatibles (.pdf, .txt).
     /// </summary>
     /// <param name="folderPath">Ruta del directorio a escanear.</param>
-    public async Task IngestFolderAsync(string folderPath)
+    /// <param name="rootPath">Opcional. Ruta raíz para determinar la jerarquía de categorías.</param>
+    public async Task IngestFolderAsync(string folderPath, string? rootPath = null)
     {
         if (!Directory.Exists(folderPath))
             return;
@@ -159,30 +160,11 @@ public class LocalSemanticMotor : ISemanticMotor
         string[] extensions = { ".pdf", ".txt" };
         var files = Directory
             .EnumerateFiles(folderPath, "*.*", SearchOption.AllDirectories)
-            .Where(f => extensions.Contains(Path.GetExtension(f).ToLower()))
-            .ToList();
+            .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
 
-        foreach (var filePath in files)
+        foreach (var file in files)
         {
-            Console.WriteLine($"   Procesando: {filePath}");
-
-            var fileTags = new TagCollection();
-            string fileName = Path.GetFileNameWithoutExtension(filePath);
-
-            string relativePath = Path.GetRelativePath(folderPath, filePath);
-            string[] pathParts = relativePath.Split(Path.DirectorySeparatorChar);
-
-            string documentId = NormalizeDocumentId(relativePath);
-
-            for (int i = 0; i < pathParts.Length - 1; i++)
-            {
-                fileTags.Add("category", pathParts[i]);
-            }
-
-            fileTags.Add("file_name", fileName);
-            fileTags.Add("ingest_date", DateTime.Now.ToString("yyyy-MM-dd"));
-
-            await _memory.ImportDocumentAsync(filePath, documentId: documentId, tags: fileTags);
+            await IngestAsync(file, rootPath ?? folderPath);
         }
         Console.WriteLine($"[OK] Ingesta por lotes completada.");
     }

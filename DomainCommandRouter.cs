@@ -54,7 +54,6 @@ public class DomainCommandRouter
                 string filePath = arguments[0];
                 string baseDocsPath = Path.Combine(AppContext.BaseDirectory, "Docs");
 
-                // Búsqueda inteligente: si no existe en la ruta literal, probar en la carpeta Docs
                 if (!File.Exists(filePath))
                 {
                     string candidate = Path.Combine(baseDocsPath, filePath);
