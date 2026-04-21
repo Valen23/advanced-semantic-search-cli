@@ -44,11 +44,10 @@ public class ReplEnvironment
 
     public async Task StartLoopAsync()
     {
-        PrintBanner();
-        Console.WriteLine(
-            $"{CurrentTheme.Secondary}Iniciando Modo Interactivo. Escribe 'help' para ver comandos.{TerminalColors.Reset}"
-        );
         bool isRunning = true;
+
+        Console.Clear();
+        PrintBanner();
 
         while (isRunning)
         {
@@ -84,28 +83,40 @@ public class ReplEnvironment
             try
             {
                 // COMANDOS DE ENTORNO
-                if (command == "set-lang")
+                if (command == "clear" || command == "cls")
+                {
+                    Console.Clear();
+                    PrintBanner();
+                    Console.WriteLine(
+                        $"{t.Secondary}Consola limpiada. Modo Interactivo Activo.{TerminalColors.Reset}"
+                    );
+                }
+                else if (command == "set-lang")
                 {
                     if (commandArgs.Length == 0)
                     {
-                        Console.WriteLine("Uso: set-lang \"<idioma>\"");
+                        Console.WriteLine(
+                            $"{t.Error}Uso: set-lang \"<idioma>\"{TerminalColors.Reset}"
+                        );
                         continue;
                     }
                     _currentLanguage = commandArgs[0];
-                    Console.WriteLine($"Idioma de la sesión cambiado a: {_currentLanguage}");
+                    Console.WriteLine(
+                        $"{t.Success}Idioma de la sesión cambiado a: {_currentLanguage}{TerminalColors.Reset}"
+                    );
                 }
                 else if (command == "set-filter")
                 {
                     if (commandArgs.Length == 0)
                     {
                         Console.WriteLine(
-                            $"{CurrentTheme.Error}Uso: set-filter \"category:Contabilidad\"{TerminalColors.Reset}"
+                            $"{t.Error}Uso: set-filter \"category:Contabilidad\"{TerminalColors.Reset}"
                         );
                         continue;
                     }
                     _currentFilter = commandArgs[0];
                     Console.WriteLine(
-                        $"{CurrentTheme.Success}Filtro de la sesión cambiado a: {_currentFilter}{TerminalColors.Reset}"
+                        $"{t.Success}Filtro de la sesión cambiado a: {_currentFilter}{TerminalColors.Reset}"
                     );
                 }
                 else if (command == "set-theme")
@@ -113,7 +124,7 @@ public class ReplEnvironment
                     if (commandArgs.Length == 0 || !ThemeLibrary.IsValidTheme(commandArgs[0]))
                     {
                         Console.WriteLine(
-                            $"{CurrentTheme.Error}Temas disponibles: {string.Join(", ", ThemeLibrary.GetAvailableThemes())}{TerminalColors.Reset}"
+                            $"{t.Error}Temas disponibles: {string.Join(", ", ThemeLibrary.GetAvailableThemes())}{TerminalColors.Reset}"
                         );
                         continue;
                     }
@@ -121,7 +132,7 @@ public class ReplEnvironment
                     _themeName = commandArgs[0];
                     await SaveThemeToConfigAsync(_themeName);
                     Console.WriteLine(
-                        $"{CurrentTheme.Success}Tema cambiado a: {_themeName}{TerminalColors.Reset}"
+                        $"{t.Success}Tema cambiado a: {_themeName}{TerminalColors.Reset}"
                     );
                 }
                 else if (command == "help")
@@ -135,7 +146,8 @@ public class ReplEnvironment
                         command,
                         commandArgs,
                         _currentLanguage,
-                        _currentFilter
+                        _currentFilter,
+                        t // Pasamos el tema actual
                     );
                 }
             }
@@ -184,6 +196,9 @@ public class ReplEnvironment
         );
         Console.WriteLine(
             $"{t.Accent}  set-theme <nombre>{TerminalColors.Reset}    - Cambia el tema (Gotham, Rust, Neon-Vapor, Forest, Glacier)"
+        );
+        Console.WriteLine(
+            $"{t.Accent}  clear / cls{TerminalColors.Reset}            - Limpia la pantalla y muestra el banner"
         );
         Console.WriteLine(
             $"{t.Accent}  help{TerminalColors.Reset}                   - Muestra esta ayuda"
