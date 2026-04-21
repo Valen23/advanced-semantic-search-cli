@@ -14,6 +14,8 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .Build();
 
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+
 string? storageDirectory = configuration["SemanticEngine:StorageDirectory"];
 string? ollamaUrl = configuration["SemanticEngine:OllamaEndpoint"];
 string? textModel = configuration["SemanticEngine:TextModel"];

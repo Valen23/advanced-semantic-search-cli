@@ -130,6 +130,7 @@ public class DomainCommandRouter
                 $"\n{t.Primary}{TerminalColors.Bold}  RESPUESTA:{TerminalColors.Reset}"
             );
             Console.ForegroundColor = GetConsoleColorFromHex(t.Primary);
+            Console.WriteLine();
 
             await foreach (var token in result.TextStream)
             {
