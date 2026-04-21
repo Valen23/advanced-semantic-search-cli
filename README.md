@@ -1,5 +1,7 @@
 # Advanced Semantic Search CLI
 
+[![Verify Build](https://github.com/Valen23/advanced-semantic-search-cli/actions/workflows/verify.yml/badge.svg)](https://github.com/Valen23/advanced-semantic-search-cli/actions/workflows/verify.yml)
+
 Una herramienta de línea de comandos profesional diseñada para la gestión y consulta semántica de documentos locales. Utiliza una arquitectura avanzada basada en Microsoft Kernel Memory y Semantic Kernel, integrada con Ollama para garantizar privacidad total y procesamiento local sin necesidad de conexión a internet para su uso.
 
 > [!IMPORTANT]
