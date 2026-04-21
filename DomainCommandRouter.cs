@@ -52,8 +52,9 @@ public class DomainCommandRouter
                 }
 
                 string filePath = arguments[0];
-                string baseDocsPath = Path.Combine(AppContext.BaseDirectory, "Docs");
+                string baseDocsPath = ResolveDocsPath();
 
+                // Búsqueda inteligente: si no existe en la ruta literal, probar en la carpeta Docs
                 if (!File.Exists(filePath))
                 {
                     string candidate = Path.Combine(baseDocsPath, filePath);
@@ -76,7 +77,7 @@ public class DomainCommandRouter
                 }
 
                 string folderToIngest = arguments[0];
-                string baseDocsPathFull = Path.Combine(AppContext.BaseDirectory, "Docs");
+                string baseDocsPathFull = ResolveDocsPath();
 
                 if (!Directory.Exists(folderToIngest))
                 {
@@ -201,5 +202,21 @@ public class DomainCommandRouter
     private ConsoleColor GetConsoleColorFromHex(string hex)
     {
         return ConsoleColor.Gray;
+    }
+
+    /// <summary>
+    /// Resuelve la ubicación de la carpeta 'Docs' buscando en el directorio actual y el del ejecutable.
+    /// </summary>
+    private string ResolveDocsPath()
+    {
+        // 1. Probar en el directorio actual (prioridad para desarrollo/dotnet run)
+        string currentDirDocs = Path.GetFullPath("Docs");
+        if (Directory.Exists(currentDirDocs))
+        {
+            return currentDirDocs;
+        }
+
+        // 2. Probar en el directorio del ejecutable (prioridad para .exe portable)
+        return Path.Combine(AppContext.BaseDirectory, "Docs");
     }
 }
