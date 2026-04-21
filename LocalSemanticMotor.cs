@@ -4,6 +4,8 @@ using Microsoft.KernelMemory.AI.Ollama;
 using Microsoft.KernelMemory.DocumentStorage.DevTools;
 using Microsoft.KernelMemory.FileSystem.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 /// <summary>
 /// Provee la lógica central del "Motor Semántico", integrando Microsoft Kernel Memory
@@ -12,6 +14,8 @@ using Microsoft.KernelMemory.MemoryStorage.DevTools;
 public class LocalSemanticMotor : ISemanticMotor
 {
     private readonly IKernelMemory _memory;
+    private readonly string _ollamaUrl;
+    private readonly string _textModel;
 
     public string StorageDirectory { get; set; }
 
@@ -31,6 +35,9 @@ public class LocalSemanticMotor : ISemanticMotor
     {
         this.StorageDirectory = storageDirectory;
         Directory.CreateDirectory(storageDirectory);
+
+        _ollamaUrl = ollamaUrl;
+        _textModel = textModel;
 
         var _ollamaEndpoint = ollamaUrl;
         var config = new OllamaConfig
@@ -72,6 +79,18 @@ public class LocalSemanticMotor : ISemanticMotor
             .Replace(Path.AltDirectorySeparatorChar, '-')
             .Replace(" ", "-")
             .Trim('-');
+    }
+
+    private MemoryFilter? ParseFilter(string? filterArg)
+    {
+        if (string.IsNullOrWhiteSpace(filterArg))
+            return null;
+        var parts = filterArg.Split(':');
+        if (parts.Length == 2)
+        {
+            return new MemoryFilter().ByTag(parts[0], parts[1]);
+        }
+        return null;
     }
 
     /// <summary>
@@ -229,6 +248,62 @@ public class LocalSemanticMotor : ISemanticMotor
             "==========================================================================\n"
         );
         return answer.Result;
+    }
+
+    public async Task AskQuestionStreamAsync(string question, string language, string? filterArg)
+    {
+        // Lógica de parseo de filtro (ya la tienes resuelta)
+        MemoryFilter? myFilter = ParseFilter(filterArg);
+
+        Console.WriteLine($"2. Buscando fragmentos relevantes en la base de datos local...");
+
+        // PASO 1: RETRIEVAL (Solo buscar, no generar texto)
+        SearchResult searchResult = await _memory.SearchAsync(question, filter: myFilter);
+
+        // PASO 2: CONSTRUCCIÓN DEL CONTEXTO (Tu tarea)
+        string contextBuilder = string.Empty;
+        // TODO: Iterar sobre searchResult.Results y sus Partitions.
+        // Extraer el texto de cada partición y concatenarlo en la variable contextBuilder.
+        // Imprimir las fuentes (citas) en este momento, antes de generar la respuesta.
+        foreach (var result in searchResult.Results)
+        {
+            Console.WriteLine($"\n Fuente: {result.SourceName}");
+            foreach (var partition in result.Partitions)
+            {
+                contextBuilder += partition.Text + "\n";
+                Console.WriteLine($"  ├─ Relevancia: {partition.Relevance:P1}");
+            }
+        }
+
+        // PASO 3: EL PROMPT MAESTRO
+        string finalPrompt =
+            $@"
+        Basado en la siguiente información de contexto:
+        ---
+        {contextBuilder}
+        ---
+        Responde a la pregunta: {question}
+        [INSTRUCCIÓN ESTRICTA: Redacta tu respuesta única y exclusivamente en {language}]
+        [INSTRUCCIÓN ESTRICTA: Respuestas breves]
+    ";
+
+        Console.WriteLine("\n================ RESPUESTA ================");
+        // 1. Configuramos el cliente de streaming
+        var builder = Kernel.CreateBuilder();
+        builder.AddOllamaChatCompletion(_textModel, new Uri(_ollamaUrl));
+        var kernel = builder.Build();
+
+        var chatService = kernel.GetRequiredService<IChatCompletionService>();
+
+        // 2. Iniciamos el streaming
+        var streamingResult = chatService.GetStreamingChatMessageContentsAsync(finalPrompt);
+
+        await foreach (var chunk in streamingResult)
+        {
+            Console.Write(chunk.Content); // Imprime cada palabra/token en tiempo real
+        }
+
+        Console.WriteLine("\n===========================================\n");
     }
 
     /// <summary>
