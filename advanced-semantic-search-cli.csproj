@@ -7,6 +7,18 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <MinVerTagPrefix>v</MinVerTagPrefix>
+
+    <!-- Global Tool Configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>rag-cli</ToolCommandName>
+    <PackageId>advanced-semantic-cli</PackageId>
+    <IsPackable>true</IsPackable>
+
+    <!-- Metadata -->
+    <Authors>Valen23</Authors>
+    <Description>Herramienta profesional de búsqueda semántica local utilizando Kernel Memory y Ollama.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Valen23/advanced-semantic-search-cli</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

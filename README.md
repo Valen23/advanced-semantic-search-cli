@@ -66,6 +66,36 @@ El archivo `appsettings.json` permite configurar el comportamiento del motor y l
 
 ---
 
+## Instalación
+
+Podes elegir entre dos métodos de instalación según tu perfil de usuario.
+
+### Opción A: .NET Global Tool (Recomendado para Desarrolladores)
+
+Si tenes el SDK de .NET instalado, esta es la forma más limpia. Registra automáticamente el comando `rag-cli` en tu sistema.
+
+**Desde el código local:**
+
+```bash
+dotnet pack -c Release
+dotnet tool install -g --add-source ./bin/Release advanced-semantic-cli
+```
+
+**Desde NuGet o Releases (Próximamente):**
+
+```bash
+dotnet tool install -g advanced-semantic-cli
+```
+
+### Opción B: Ejecutable Portable (Sin Instalación)
+
+Ideal para un uso rápido o para máquinas sin el SDK de .NET.
+
+1. Descarga el ejecutable desde la pestaña [Releases](https://github.com/Valen23/advanced-semantic-search-cli/releases).
+2. (Opcional) Agrega la carpeta al PATH de tu sistema para invocarlo como `rag-cli` desde cualquier lugar.
+
+---
+
 ## Guía de Uso
 
 ### 1. Inicio de la Aplicación

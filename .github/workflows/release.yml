@@ -29,10 +29,14 @@ jobs:
       - name: Publish Windows
         run: dotnet publish -c Release -o ./publish-win /p:PublishSingleFile=true /p:SelfContained=false -r win-x64 --self-contained false
 
+      - name: Pack as Tool
+        run: dotnet pack -c Release -o ./publish-nuget
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./publish/advanced-semantic-cli-linux
             ./publish-win/advanced-semantic-search-cli.exe
+            ./publish-nuget/*.nupkg
           generate_release_notes: true
