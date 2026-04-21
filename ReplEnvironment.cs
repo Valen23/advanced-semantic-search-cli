@@ -47,7 +47,7 @@ public class ReplEnvironment
  \___ \|  __| | |\/| | / /\ \ | . ` |  | |    | || |     
  ____) | |____| |  | |/ ____ \| |\  |  | |   _| || |____ 
 |_____/|______|_|  |_/_/    \_\_| \_|  |_|  |_____\_____|
-{t.Secondary}           SEARCH ENGINE - SEMANTIC CLI v0.5{TerminalColors.Reset}
+{t.Secondary}           SEARCH ENGINE - SEMANTIC CLI v1.0{TerminalColors.Reset}
 ";
         Console.WriteLine(banner);
     }
