@@ -50,7 +50,21 @@ public class DomainCommandRouter
                     );
                     return;
                 }
-                await _motor.IngestAsync(arguments[0], "Docs");
+
+                string filePath = arguments[0];
+                string baseDocsPath = Path.Combine(AppContext.BaseDirectory, "Docs");
+
+                // Búsqueda inteligente: si no existe en la ruta literal, probar en la carpeta Docs
+                if (!File.Exists(filePath))
+                {
+                    string candidate = Path.Combine(baseDocsPath, filePath);
+                    if (File.Exists(candidate))
+                    {
+                        filePath = candidate;
+                    }
+                }
+
+                await _motor.IngestAsync(filePath, baseDocsPath);
                 break;
 
             case "ingest-folder":
@@ -61,7 +75,20 @@ public class DomainCommandRouter
                     );
                     return;
                 }
-                await _motor.IngestFolderAsync(arguments[0]);
+
+                string folderToIngest = arguments[0];
+                string baseDocsPathFull = Path.Combine(AppContext.BaseDirectory, "Docs");
+
+                if (!Directory.Exists(folderToIngest))
+                {
+                    string candidate = Path.Combine(baseDocsPathFull, folderToIngest);
+                    if (Directory.Exists(candidate))
+                    {
+                        folderToIngest = candidate;
+                    }
+                }
+
+                await _motor.IngestFolderAsync(folderToIngest, baseDocsPathFull);
                 break;
 
             case "delete":
