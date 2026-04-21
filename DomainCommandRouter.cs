@@ -151,17 +151,17 @@ public class DomainCommandRouter
     /// <summary>
     /// Muestra una animación de spinner en la consola mientras se realiza una tarea asíncrona.
     /// </summary>
-    private void ShowSpinner(string message, CliTheme t, CancellationToken token)
+    private async void ShowSpinner(string message, CliTheme t, CancellationToken token)
     {
         string[] frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
         int i = 0;
         while (!token.IsCancellationRequested)
         {
+            await Task.Delay(100);
             Console.Write(
                 $"\r{t.Accent}{frames[i % frames.Length]} {message}{TerminalColors.Reset}"
             );
             i++;
-            Thread.Sleep(100);
         }
     }
 
