@@ -32,11 +32,18 @@ jobs:
       - name: Pack as Tool
         run: dotnet pack -c Release -o ./publish-nuget
 
+      - name: Prepare Windows ZIP
+        run: |
+          mkdir -p dist-win/Docs
+          cp ./publish-win/advanced-semantic-search-cli.exe ./dist-win/
+          cp appsettings.json README.md LICENSE ./dist-win/
+          cd dist-win && zip -r ../advanced-semantic-cli-windows.zip .
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./publish/advanced-semantic-cli-linux
-            ./publish-win/advanced-semantic-search-cli.exe
+            ./advanced-semantic-cli-windows.zip
             ./publish-nuget/*.nupkg
           generate_release_notes: true

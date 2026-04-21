@@ -10,7 +10,7 @@ using Microsoft.KernelMemory.MemoryStorage.DevTools;
 using Repl;
 
 var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
+    .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .Build();
 
